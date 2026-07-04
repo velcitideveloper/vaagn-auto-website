@@ -116,7 +116,7 @@ About → /about.html
 Dealership → /become-a-dealer.html
 Contact → openPopup('Contact')
 Dealer's Portal → /dealer-portal.html
-Viem Academy → https://academy.vaagnauto.com (target="_blank")
+Vaagn Ev Academy → https://academy.vaagnauto.com (target="_blank")
 ```
 
 ---

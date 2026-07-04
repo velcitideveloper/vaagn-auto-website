@@ -24,15 +24,20 @@ document.getElementById('popup-overlay').addEventListener('click', e => {
   if(e.target === e.currentTarget) closePopup(); 
 });
 
+let popupSubmitting = false;
+
 async function submitPopup() {
+  if (popupSubmitting) return;
+
   const name = document.getElementById('p-name').value.trim();
   const phone = document.getElementById('p-phone').value.trim();
   const city = document.getElementById('p-city').value.trim();
   const vehicle = document.getElementById('p-vehicle').value;
   if(!name || phone.length < 10) { alert('Please enter name and 10-digit phone.'); return; }
-  
+
+  popupSubmitting = true;
   const btn = document.querySelector('.p-submit');
-  btn.textContent = 'Submitting…';
+  btn.textContent = 'Sending...';
   btn.disabled = true;
   const p = new URLSearchParams({ 
     name, phone: '+91' + phone, city, vehicle, 
@@ -50,6 +55,7 @@ async function submitPopup() {
     closePopup();
     btn.textContent = 'Request Callback →';
     btn.disabled = false;
+    popupSubmitting = false;
     ['p-name', 'p-phone', 'p-city'].forEach(id => document.getElementById(id).value = '');
   }, 1800);
 }
