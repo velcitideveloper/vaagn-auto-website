@@ -285,6 +285,7 @@ nav {
     text-align: right; padding: 0 clamp(24px,6vw,80px) 60px 0;
     background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%);
     padding: 0 clamp(24px,6vw,80px) 270px 0;
+    margin-top: 50px;
 }
 .hero-slide[data-pos="bottom-right2"] .hero-content {
     justify-content: flex-end; align-items: flex-end;
