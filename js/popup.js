@@ -8,7 +8,7 @@ setInterval(() => {
   if (overlay && !overlay.classList.contains('active') && !localStorage.getItem('vaagn_popup_seen')) {
     openPopup('General');
   }
-}, 10000);
+}, 30000);
 function openPopup(v) {
   document.getElementById('p-vehicle').value = v;
   document.getElementById('popup-sub').textContent = v !== 'General' 
