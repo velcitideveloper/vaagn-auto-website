@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="VAAGN ERP">
 <title>VAAGN ERP</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:Arial,sans-serif;background:#1A1A2E;min-height:100vh;color:#fff;overflow-x:hidden}
@@ -180,45 +181,61 @@ footer{text-align:center;padding:20px;color:#555;font-size:11px}
 
     <!-- SCANNER SECTION — always visible -->
     <div class="card" style="margin-bottom:14px">
-      <h4>📷 Barcode Scanner</h4>
+      <h4>📦 Serial Number Capture</h4>
       <p style="font-size:11px;color:#aaa;margin-bottom:10px">
-        Scan any barcode or enter manually. Swipe left on a serial to delete it.
+        Scan barcode, scan text, use voice, or type manually.
+        Swipe left on any serial to delete it.
       </p>
-
-      <!-- Camera view -->
-      <div id="str-qr-reader" style="margin-bottom:10px"></div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <button class="btn btn-secondary" id="str-scan-btn" onclick="startStoreScanner()" style="margin:0">
-          📷 Start Scan
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <button class="btn btn-secondary" id="str-scan-btn"
+          onclick="startBarcodeScanner()" style="margin:0;font-size:13px">
+          📷 Scan Barcode
         </button>
-        <button class="btn btn-danger" id="str-scan-stop" style="display:none;margin:0" onclick="stopStoreScanner()">
+        <button class="btn btn-warning"
+          onclick="startOCRScanner()" style="margin:0;font-size:13px">
+          🔤 Scan Text
+        </button>
+        <button class="btn btn-primary" id="str-voice-btn"
+          onclick="startVoiceInput()" style="margin:0;font-size:13px">
+          🎤 Voice
+        </button>
+        <button class="btn btn-danger" id="str-scan-stop"
+          style="display:none;margin:0;font-size:13px"
+          onclick="stopScanner()">
           ⏹ Stop
         </button>
       </div>
-
-      <div class="divider">OR type manually</div>
-
-      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px">
-        <input type="text" id="str-manual-serial" placeholder="Type serial number">
-        <button class="btn-small btn-primary" onclick="addManualSerial()" style="white-space:nowrap">
-          Add ✓
-        </button>
+      <div id="str-qr-reader"
+        style="margin-bottom:10px;border-radius:8px;overflow:hidden"></div>
+      <div id="str-ocr-box" style="display:none;margin-bottom:10px">
+        <label style="font-size:12px;color:#aaa">
+          OCR Result — check and correct before adding:
+        </label>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:6px">
+          <input type="text" id="str-ocr-result" placeholder="OCR result">
+          <button class="btn-small btn-primary" onclick="confirmOCR()">Add ✓</button>
+        </div>
       </div>
-
+      <div class="divider">OR type manually</div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:10px">
+        <input type="text" id="str-manual-serial"
+          placeholder="Type or paste serial number"
+          oninput="sanitizeSerialInput(this)">
+        <button class="btn-small btn-primary" onclick="addManualSerial()">Add ✓</button>
+      </div>
       <div id="str-scan-msg" class="msg" style="margin-top:8px"></div>
-
-      <!-- Scanned list -->
       <div style="margin-top:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span class="count-badge" id="str-serial-count">0 serials scanned</span>
-          <button class="btn-small btn-danger" onclick="clearAllSerials()" style="font-size:11px">
+        <div style="display:flex;justify-content:space-between;
+          align-items:center;margin-bottom:8px">
+          <span class="count-badge" id="str-serial-count">0 serials added</span>
+          <button class="btn-small btn-danger"
+            onclick="clearAllSerials()" style="font-size:11px">
             Clear All
           </button>
         </div>
         <div id="str-serial-list">
           <div style="color:#555;font-size:12px;text-align:center;padding:12px">
-            No serials scanned yet
+            No serials added yet
           </div>
         </div>
       </div>
@@ -639,12 +656,16 @@ function populateSelect(elId, items, valKey, labelKey, placeholder) {
 }
 
 // ==================== STORE RECEIPT ====================
-var swipeStartX = 0;
-var swipeEl = null;
+var storeSerials = [];
+var html5QrCode = null;
+var scanCooldown = false;
+var lastScanned = '';
 
 function loadStoreData() {
   storeSerials = [];
   renderStoreSerials();
+  hideMsg('str-scan-msg');
+  hideMsg('str-msg');
 
   api('getOpenPurchases').then(function(data) {
     var el = $('str-po');
@@ -653,7 +674,8 @@ function loadStoreData() {
       data.forEach(function(po) {
         var opt = document.createElement('option');
         opt.value = po.id;
-        opt.textContent = po.id + ' — ' + po.supplierName + ' — ' + po.componentName;
+        opt.textContent = po.id + ' — ' + po.supplierName +
+          ' — ' + po.componentName;
         el.appendChild(opt);
       });
     } else {
@@ -663,147 +685,23 @@ function loadStoreData() {
     $('str-po').innerHTML = '<option value="">Error loading POs</option>';
   });
 
-  // Enter key for manual serial
   $('str-manual-serial').onkeypress = function(e) {
     if (e.key === 'Enter') addManualSerial();
   };
-}
 
-function updateSerialCount() {
-  var valid = storeSerials.filter(function(s) { return !s.dup; }).length;
-  $('str-serial-count').textContent = valid + ' serial' + (valid !== 1 ? 's' : '') + ' scanned';
-}
-
-function renderStoreSerials() {
-  var el = $('str-serial-list');
-  el.innerHTML = '';
-  if (!storeSerials.length) {
-    el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:12px">No serials scanned yet</div>';
-    updateSerialCount();
-    return;
-  }
-
-  storeSerials.forEach(function(s, i) {
-    var wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:relative;overflow:hidden;margin-bottom:6px;border-radius:8px';
-
-    // Delete button behind
-    var delBtn = document.createElement('div');
-    delBtn.style.cssText = 'position:absolute;right:0;top:0;bottom:0;background:#8B1A1A;color:#fff;display:flex;align-items:center;padding:0 16px;font-size:13px;font-weight:bold;cursor:pointer;border-radius:8px';
-    delBtn.textContent = 'Delete';
-    delBtn.onclick = function() { removeStoreSerial(i); };
-
-    // Serial item
-    var item = document.createElement('div');
-    item.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:' + (s.dup ? '#3a1a1a' : '#1a3a2a') + ';border-radius:8px;position:relative;transition:transform 0.2s;touch-action:pan-y';
-    item.innerHTML =
-      '<span style="font-size:13px;color:' + (s.dup ? '#ff6b6b' : '#4caf50') + '">' +
-      (s.dup ? '⚠ DUP: ' : '✓ ') + s.serial + '</span>' +
-      '<span style="font-size:11px;color:#555">' + (i+1) + '</span>';
-
-    // Swipe to reveal delete
-    var startX = 0;
-    var currentX = 0;
-    var swiping = false;
-
-    item.addEventListener('touchstart', function(e) {
-      startX = e.touches[0].clientX;
-      swiping = true;
-    }, { passive: true });
-
-    item.addEventListener('touchmove', function(e) {
-      if (!swiping) return;
-      currentX = e.touches[0].clientX - startX;
-      if (currentX < 0) {
-        item.style.transform = 'translateX(' + Math.max(currentX, -80) + 'px)';
-      }
-    }, { passive: true });
-
-    item.addEventListener('touchend', function() {
-      swiping = false;
-      if (currentX < -60) {
-        item.style.transform = 'translateX(-80px)';
-      } else {
-        item.style.transform = 'translateX(0)';
-      }
-      currentX = 0;
-    });
-
-    wrapper.appendChild(delBtn);
-    wrapper.appendChild(item);
-    el.appendChild(wrapper);
-  });
-
-  updateSerialCount();
-}
-
-function removeStoreSerial(idx) {
-  storeSerials.splice(idx, 1);
-  renderStoreSerials();
-}
-
-function clearAllSerials() {
-  if (storeSerials.length === 0) return;
-  if (confirm('Clear all ' + storeSerials.length + ' scanned serials?')) {
-    storeSerials = [];
-    renderStoreSerials();
+  if (!('webkitSpeechRecognition' in window) &&
+      !('SpeechRecognition' in window)) {
+    $('str-voice-btn').style.display = 'none';
   }
 }
 
-function addStoreSerial(serial) {
-  if (!serial || !serial.trim()) return;
-  serial = serial.trim().toUpperCase();
-
-  // Check duplicate in current list
-  var isDupLocal = storeSerials.some(function(s) {
-    return s.serial.toLowerCase() === serial.toLowerCase();
-  });
-  if (isDupLocal) {
-    showMsg('str-scan-msg', '⚠ Already scanned: ' + serial, 'warn');
-    playBeep('error');
-    flashScreen('#ff0000');
-    return;
-  }
-
-  // Check duplicate in Inventory
-  api('checkDuplicateSerial', { serial: serial }).then(function(isDup) {
-    storeSerials.push({ serial: serial, dup: isDup });
-    renderStoreSerials();
-    if (isDup) {
-      showMsg('str-scan-msg', '✗ DUPLICATE in Inventory: ' + serial, 'err');
-      playBeep('error');
-      flashScreen('#ff0000');
-    } else {
-      showMsg('str-scan-msg', '✓ Added: ' + serial, 'ok');
-      playBeep('success');
-      flashScreen('#00ff00');
-    }
-  }).catch(function() {
-    storeSerials.push({ serial: serial, dup: false });
-    renderStoreSerials();
-    showMsg('str-scan-msg', '✓ Added: ' + serial, 'ok');
-    playBeep('success');
-    flashScreen('#00ff00');
-  });
-}
-
-function addManualSerial() {
-  var val = $('str-manual-serial').value.trim();
-  if (!val) return;
-  addStoreSerial(val);
-  $('str-manual-serial').value = '';
-}
-
-var lastScanned = '';
-var scanCooldown = false;
-
-function startStoreScanner() {
+function startBarcodeScanner() {
+  stopScanner();
   html5QrCode = new Html5Qrcode('str-qr-reader');
   html5QrCode.start(
     { facingMode: 'environment' },
     { fps: 10, qrbox: { width: 280, height: 120 } },
     function(text) {
-      // Ignore if same barcode scanned within 3 seconds
       if (scanCooldown || text === lastScanned) return;
       lastScanned = text;
       scanCooldown = true;
@@ -818,19 +716,308 @@ function startStoreScanner() {
     $('str-scan-stop').style.display = 'block';
     showMsg('str-scan-msg', '📷 Camera active — point at barcode', 'info');
   }).catch(function(err) {
+    if (err.toString().indexOf('permission') >= 0) {
+      showMsg('str-scan-msg',
+        '✗ Camera permission denied. Allow camera in browser settings.', 'err');
+    } else {
+      showMsg('str-scan-msg', '✗ Camera error: ' + err, 'err');
+    }
+  });
+}
+
+function startOCRScanner() {
+  stopScanner();
+  $('str-ocr-box').style.display = 'none';
+  html5QrCode = new Html5Qrcode('str-qr-reader');
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 2, qrbox: { width: 300, height: 100 } },
+    function() {}
+  ).then(function() {
+    $('str-scan-stop').style.display = 'block';
+    showMsg('str-scan-msg',
+      '🔤 Point at printed text. Tap Capture when steady.', 'info');
+    var existing = $('str-cap-btn');
+    if (!existing) {
+      var capBtn = document.createElement('button');
+      capBtn.id = 'str-cap-btn';
+      capBtn.className = 'btn btn-warning';
+      capBtn.style.marginTop = '8px';
+      capBtn.textContent = '📸 Capture Text';
+      capBtn.onclick = captureOCR;
+      $('str-qr-reader').parentNode.insertBefore(
+        capBtn, $('str-qr-reader').nextSibling);
+    }
+  }).catch(function(err) {
     showMsg('str-scan-msg', '✗ Camera error: ' + err, 'err');
   });
 }
 
-function stopStoreScanner() {
-  if (html5QrCode) {
-    html5QrCode.stop().then(function() {
-      $('str-scan-btn').style.display = 'block';
-      $('str-scan-stop').style.display = 'none';
-      showMsg('str-scan-msg', 'Scanner stopped.', 'info');
-      html5QrCode = null;
-    });
+function captureOCR() {
+  showMsg('str-scan-msg', '🔍 Reading text...', 'info');
+  var video = document.querySelector('#str-qr-reader video');
+  if (!video) {
+    showMsg('str-scan-msg', '✗ Camera not ready. Try again.', 'err');
+    return;
   }
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  Tesseract.recognize(canvas, 'eng', {
+    logger: function(m) {
+      if (m.status === 'recognizing text') {
+        showMsg('str-scan-msg',
+          '🔍 Reading... ' + Math.round(m.progress * 100) + '%', 'info');
+      }
+    }
+  }).then(function(result) {
+    var text = result.data.text
+      .trim()
+      .replace(/[^A-Za-z0-9\-\_\/]/g, '')
+      .toUpperCase();
+    if (!text) {
+      showMsg('str-scan-msg',
+        '✗ No text found. Ensure good lighting and hold steady.', 'err');
+      playBeep('error');
+      return;
+    }
+    $('str-ocr-result').value = text;
+    $('str-ocr-box').style.display = 'block';
+    showMsg('str-scan-msg',
+      '✓ Text captured. Check and correct above, then tap Add.', 'ok');
+    stopScanner();
+  }).catch(function(err) {
+    showMsg('str-scan-msg', '✗ OCR failed: ' + err.message, 'err');
+    playBeep('error');
+  });
+}
+
+function confirmOCR() {
+  var val = $('str-ocr-result').value.trim();
+  if (!val) {
+    showMsg('str-scan-msg', '✗ Result is empty. Try again.', 'err');
+    return;
+  }
+  addStoreSerial(val);
+  $('str-ocr-box').style.display = 'none';
+  $('str-ocr-result').value = '';
+}
+
+function startVoiceInput() {
+  var SpeechRecognition = window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showMsg('str-scan-msg',
+      '✗ Voice not supported. Use Chrome browser.', 'err');
+    return;
+  }
+  var recognition = new SpeechRecognition();
+  recognition.lang = 'en-IN';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  showMsg('str-scan-msg', '🎤 Listening... speak the serial number now', 'info');
+  recognition.onresult = function(e) {
+    var serial = e.results[0][0].transcript
+      .toUpperCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^A-Z0-9\-\_]/g, '');
+    $('str-manual-serial').value = serial;
+    showMsg('str-scan-msg',
+      '🎤 Heard: "' + serial + '" — check and tap Add ✓', 'ok');
+  };
+  recognition.onerror = function(e) {
+    var msg = '✗ Voice error: ';
+    if (e.error === 'no-speech') msg += 'No speech detected. Try again.';
+    else if (e.error === 'audio-capture') msg += 'No microphone found.';
+    else if (e.error === 'not-allowed') msg += 'Microphone permission denied.';
+    else if (e.error === 'network') msg += 'Network error.';
+    else msg += e.error;
+    showMsg('str-scan-msg', msg, 'err');
+    playBeep('error');
+  };
+  recognition.onnomatch = function() {
+    showMsg('str-scan-msg',
+      '✗ Could not understand. Speak clearly and try again.', 'err');
+  };
+  try { recognition.start(); } catch(e) {
+    showMsg('str-scan-msg', '✗ Could not start voice: ' + e.message, 'err');
+  }
+}
+
+function stopScanner() {
+  if (html5QrCode) {
+    try {
+      html5QrCode.stop().catch(function() {});
+    } catch(e) {}
+    html5QrCode = null;
+  }
+  $('str-scan-btn').style.display = 'block';
+  $('str-scan-stop').style.display = 'none';
+  var capBtn = $('str-cap-btn');
+  if (capBtn) capBtn.remove();
+  scanCooldown = false;
+  lastScanned = '';
+}
+
+function sanitizeSerialInput(input) {
+  var pos = input.selectionStart;
+  var cleaned = input.value
+    .toUpperCase()
+    .replace(/[^A-Z0-9\-\_\/]/g, '');
+  if (cleaned !== input.value) {
+    input.value = cleaned;
+    try { input.setSelectionRange(pos, pos); } catch(e) {}
+  }
+}
+
+function addManualSerial() {
+  var val = $('str-manual-serial').value.trim();
+  if (!val) {
+    showMsg('str-scan-msg', '✗ Enter a serial number first', 'err');
+    return;
+  }
+  addStoreSerial(val);
+  $('str-manual-serial').value = '';
+}
+
+function addStoreSerial(serial) {
+  if (!serial || !serial.trim()) return;
+  serial = serial.trim().toUpperCase()
+    .replace(/[^A-Z0-9\-\_\/]/g, '');
+  if (!serial) {
+    showMsg('str-scan-msg',
+      '✗ Invalid serial — only letters, numbers and dashes allowed', 'err');
+    return;
+  }
+  var isDupLocal = storeSerials.some(function(s) {
+    return s.serial.toLowerCase() === serial.toLowerCase();
+  });
+  if (isDupLocal) {
+    showMsg('str-scan-msg', '⚠ Already in this list: ' + serial, 'warn');
+    playBeep('error');
+    flashScreen('#ff0000');
+    return;
+  }
+  showMsg('str-scan-msg', 'Checking...', 'info');
+  api('checkDuplicateSerial', { serial: serial }).then(function(isDup) {
+    storeSerials.push({ serial: serial, dup: isDup });
+    renderStoreSerials();
+    if (isDup) {
+      showMsg('str-scan-msg',
+        '✗ DUPLICATE: ' + serial + ' already exists in Inventory!', 'err');
+      playBeep('error');
+      flashScreen('#ff0000');
+    } else {
+      showMsg('str-scan-msg', '✓ Added: ' + serial, 'ok');
+      playBeep('success');
+      flashScreen('#00ff00');
+    }
+  }).catch(function() {
+    storeSerials.push({ serial: serial, dup: false });
+    renderStoreSerials();
+    showMsg('str-scan-msg',
+      '⚠ Added: ' + serial + ' (could not verify — check manually)', 'warn');
+    playBeep('success');
+  });
+}
+
+function renderStoreSerials() {
+  var el = $('str-serial-list');
+  el.innerHTML = '';
+  if (!storeSerials.length) {
+    el.innerHTML =
+      '<div style="color:#555;font-size:12px;text-align:center;padding:12px">' +
+      'No serials added yet</div>';
+    updateSerialCount();
+    return;
+  }
+  storeSerials.forEach(function(s, i) {
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText =
+      'position:relative;overflow:hidden;margin-bottom:6px;border-radius:8px';
+    var delBtn = document.createElement('div');
+    delBtn.style.cssText =
+      'position:absolute;right:0;top:0;bottom:0;background:#8B1A1A;' +
+      'color:#fff;display:flex;align-items:center;padding:0 16px;' +
+      'font-size:13px;font-weight:bold;cursor:pointer;border-radius:8px';
+    delBtn.textContent = '🗑 Delete';
+    delBtn.onclick = function() { removeStoreSerial(i); };
+    var item = document.createElement('div');
+    item.style.cssText =
+      'display:flex;justify-content:space-between;align-items:center;' +
+      'padding:10px 14px;background:' +
+      (s.dup ? '#3a1a1a' : '#1a3a2a') +
+      ';border-radius:8px;position:relative;' +
+      'transition:transform 0.2s;touch-action:pan-y;user-select:none';
+    var label = document.createElement('div');
+    var serial_span = document.createElement('span');
+    serial_span.style.cssText = 'font-size:13px;color:' +
+      (s.dup ? '#ff6b6b' : '#4caf50');
+    serial_span.textContent = (s.dup ? '⚠ DUP: ' : '✓ ') + s.serial;
+    label.appendChild(serial_span);
+    if (s.dup) {
+      var dupNote = document.createElement('div');
+      dupNote.style.cssText = 'font-size:10px;color:#ff6b6b';
+      dupNote.textContent = 'Already in Inventory — remove before saving';
+      label.appendChild(dupNote);
+    }
+    var num = document.createElement('span');
+    num.style.cssText = 'font-size:11px;color:#555';
+    num.textContent = '#' + (i + 1);
+    item.appendChild(label);
+    item.appendChild(num);
+    var startX = 0, currentX = 0, swiping = false;
+    item.addEventListener('touchstart', function(e) {
+      startX = e.touches[0].clientX;
+      swiping = true;
+    }, { passive: true });
+    item.addEventListener('touchmove', function(e) {
+      if (!swiping) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) {
+        item.style.transform =
+          'translateX(' + Math.max(currentX, -90) + 'px)';
+      }
+    }, { passive: true });
+    item.addEventListener('touchend', function() {
+      swiping = false;
+      if (currentX < -60) {
+        item.style.transform = 'translateX(-90px)';
+      } else {
+        item.style.transform = 'translateX(0)';
+      }
+      currentX = 0;
+    });
+    wrapper.appendChild(delBtn);
+    wrapper.appendChild(item);
+    el.appendChild(wrapper);
+  });
+  updateSerialCount();
+}
+
+function removeStoreSerial(idx) {
+  storeSerials.splice(idx, 1);
+  renderStoreSerials();
+}
+
+function clearAllSerials() {
+  if (!storeSerials.length) return;
+  if (confirm('Clear all ' + storeSerials.length + ' serials?')) {
+    storeSerials = [];
+    renderStoreSerials();
+    showMsg('str-scan-msg', 'All serials cleared.', 'info');
+  }
+}
+
+function updateSerialCount() {
+  var valid = storeSerials.filter(function(s) { return !s.dup; }).length;
+  var dups = storeSerials.length - valid;
+  var text = valid + ' serial' + (valid !== 1 ? 's' : '') + ' added';
+  if (dups > 0) text += ' | ⚠ ' + dups + ' duplicate(s)!';
+  $('str-serial-count').textContent = text;
 }
 
 function saveStoreReceipt() {
@@ -838,42 +1025,42 @@ function saveStoreReceipt() {
   var recby = $('str-recby').value.trim();
   var recv = parseInt($('str-recv').value) || 0;
   var acc = parseInt($('str-acc').value) || 0;
-
   if (!po) { showMsg('str-msg', '✗ Select a Purchase Order', 'err'); return; }
   if (!recby) { showMsg('str-msg', '✗ Enter Received By name', 'err'); return; }
   if (!recv) { showMsg('str-msg', '✗ Enter quantity received', 'err'); return; }
-
-  var validSerials = storeSerials
-    .filter(function(s) { return !s.dup; })
-    .map(function(s) { return s.serial; });
-
+  var dups = storeSerials.filter(function(s) { return s.dup; });
+  if (dups.length > 0) {
+    showMsg('str-msg',
+      '✗ Remove ' + dups.length + ' duplicate serial(s) before saving', 'err');
+    return;
+  }
+  var validSerials = storeSerials.map(function(s) { return s.serial; });
   showMsg('str-msg', 'Saving...', 'info');
-
-  var payload = {
+  var rej = recv - acc;
+  var status = acc >= recv ? 'Accepted' : acc > 0 ? 'Partial' : 'Rejected';
+  api('saveStoreReceipt', {
     purchase_id: po,
     received_by: recby,
     qty_received: recv,
     qty_accepted: acc,
-    qty_rejected: recv - acc,
+    qty_rejected: rej < 0 ? 0 : rej,
     condition: 'Good',
-    status: acc >= recv ? 'Accepted' : acc > 0 ? 'Partial' : 'Rejected',
+    status: status,
     manufacturer_serials: validSerials.join(', '),
     remarks: $('str-remarks').value
-  };
-
-  api('saveStoreReceipt', payload).then(function(r) {
+  }).then(function(r) {
     if (r.success) {
       showMsg('str-msg', '✓ Receipt ' + r.id + ' saved!', 'ok');
       playBeep('complete');
       storeSerials = [];
       renderStoreSerials();
-      if (html5QrCode) stopStoreScanner();
+      stopScanner();
       setTimeout(function() { showScreen('screen-home'); }, 2000);
     } else {
       showMsg('str-msg', '✗ ' + r.error, 'err');
     }
-  }).catch(function(e) {
-    showMsg('str-msg', '✗ ' + e.message, 'err');
+  }).catch(function() {
+    showMsg('str-msg', '✗ Network error. Check connection and retry.', 'err');
   });
 }
 
