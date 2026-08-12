@@ -807,12 +807,23 @@ function addManualSerial() {
   $('str-manual-serial').value = '';
 }
 
+var lastScanned = '';
+var scanCooldown = false;
+
 function startStoreScanner() {
   html5QrCode = new Html5Qrcode('str-qr-reader');
   html5QrCode.start(
     { facingMode: 'environment' },
-    { fps: 15, qrbox: { width: 280, height: 120 } },
+    { fps: 10, qrbox: { width: 280, height: 120 } },
     function(text) {
+      // Ignore if same barcode scanned within 3 seconds
+      if (scanCooldown || text === lastScanned) return;
+      lastScanned = text;
+      scanCooldown = true;
+      setTimeout(function() {
+        scanCooldown = false;
+        lastScanned = '';
+      }, 3000);
       addStoreSerial(text);
     }
   ).then(function() {
@@ -1437,6 +1448,13 @@ function installApp() {
 
 // ==================== INIT ====================
 window.onload = function() {
+  // Unlock audio on first touch
+  document.addEventListener('touchstart', function unlockAudio() {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.resume();
+    document.removeEventListener('touchstart', unlockAudio);
+  }, { once: true });
+
   // Set today's date for date fields
   var today = new Date().toISOString().split('T')[0];
   var dateFields = document.querySelectorAll('input[type="date"]');
