@@ -608,34 +608,21 @@ function flashScreen(color) {
   setTimeout(function() { el.style.opacity = '0'; }, 300);
 }
 
+var audioSuccess = new Audio('/erp/beep-success.mp3');
+var audioError = new Audio('/erp/beep-error.mp3');
+var audioComplete = new Audio('/erp/beep-complete.mp3');
+
 function playBeep(type) {
   try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    var osc = ctx.createOscillator();
-    var gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
     if (type === 'success') {
-      osc.frequency.value = 1200; osc.type = 'sine';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
-      osc.start(); osc.stop(ctx.currentTime + 0.1);
+      audioSuccess.currentTime = 0;
+      audioSuccess.play();
     } else if (type === 'error') {
-      osc.frequency.value = 300; osc.type = 'square';
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      osc.start(); osc.stop(ctx.currentTime + 0.3);
+      audioError.currentTime = 0;
+      audioError.play();
     } else if (type === 'complete') {
-      [523, 659, 784].forEach(function(f, i) {
-        var o = ctx.createOscillator();
-        var g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-        o.frequency.value = f; o.type = 'sine';
-        g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.15);
-        o.start(ctx.currentTime + i * 0.15);
-        o.stop(ctx.currentTime + i * 0.15 + 0.15);
-      });
+      audioComplete.currentTime = 0;
+      audioComplete.play();
     }
   } catch(e) {}
 }
