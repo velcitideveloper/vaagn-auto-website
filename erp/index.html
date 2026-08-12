@@ -563,10 +563,10 @@ var pendingSerialItems = [];
 
 // ==================== API CALL ====================
 function api(action, data) {
-  return fetch(API, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: action, data: data || {} })
+  var url = API + '?action=' + encodeURIComponent(action) + 
+    '&data=' + encodeURIComponent(JSON.stringify(data || {}));
+  return fetch(url, {
+    method: 'GET'
   }).then(function(r) { return r.json(); });
 }
 
