@@ -10,7 +10,13 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git branch *)",
-      "PowerShell(Get-ChildItem \"D:\\\\VaagnWebsite\\\\images\" -Directory | ForEach-Object { Write-Host \"=== $\\($_.Name\\) ===\"; Get-ChildItem $_.FullName | Select-Object -ExpandProperty Name })"
+      "PowerShell(Get-ChildItem \"D:\\\\VaagnWebsite\\\\images\" -Directory | ForEach-Object { Write-Host \"=== $\\($_.Name\\) ===\"; Get-ChildItem $_.FullName | Select-Object -ExpandProperty Name })",
+      "Bash(find /d/Vaagn -iname \"*.clasp*\" -o -iname \"Code.gs\" -o -iname \"appsscript.json\" 2>/dev/null)",
+      "Read(//d/Vaagn/**)",
+      "Read(//d//**)",
+      "Read(//c/Users/velci/**)",
+      "Bash(find ~ -maxdepth 5 -iname \"*.clasp.json\" -o -maxdepth 5 -iname \"*.clasprc.json\" 2>/dev/null)",
+      "Bash(npx clasp *)"
     ]
   }
 }

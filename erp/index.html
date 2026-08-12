@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0F6E56">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VAAGN ERP">
+<title>VAAGN ERP</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:#1A1A2E;min-height:100vh;color:#fff;overflow-x:hidden}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+.header{background:#0F6E56;padding:14px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.header h2{font-size:16px;color:#fff;flex:1}
+.back-btn{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:4px 8px}
+.logo-header{background:#0F6E56;padding:20px 16px;text-align:center}
+.logo-header h1{font-size:22px;font-weight:bold;color:#fff}
+.logo-header p{font-size:12px;color:#cfc;margin-top:4px}
+.container{padding:16px;flex:1}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.role-card{background:#252545;border-radius:14px;padding:22px 12px;text-align:center;border:none;color:#fff;cursor:pointer;transition:transform 0.1s;border:1px solid #333;width:100%}
+.role-card:active{transform:scale(0.96)}
+.role-icon{font-size:36px;margin-bottom:10px}
+.role-name{font-size:14px;font-weight:bold}
+.role-desc{font-size:11px;color:#aaa;margin-top:4px}
+.form-group{margin-bottom:14px}
+label{display:block;margin-bottom:5px;font-size:12px;font-weight:bold;color:#ccc}
+input,select,textarea{width:100%;padding:12px;border:1px solid #333;border-radius:8px;font-size:14px;background:#252545;color:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#0F6E56}
+select option{background:#252545;color:#fff}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font:bold 15px Arial;cursor:pointer;margin-bottom:10px;transition:opacity 0.2s}
+.btn:active{opacity:0.8}
+.btn-primary{background:#0F6E56;color:#fff}
+.btn-secondary{background:#1565C0;color:#fff}
+.btn-warning{background:#E65100;color:#fff}
+.btn-danger{background:#8B1A1A;color:#fff}
+.btn-grey{background:#444;color:#fff}
+.btn-small{padding:8px 14px;width:auto;font-size:13px;border-radius:8px;border:none;cursor:pointer;color:#fff}
+.msg{padding:12px;border-radius:8px;font-size:13px;margin-bottom:10px;display:none}
+.msg.show{display:block}
+.msg.ok{background:#E8F5EE;color:#1E6B3C}
+.msg.err{background:#FDECEA;color:#8B1A1A}
+.msg.info{background:#E8F0FE;color:#0D47A1}
+.msg.warn{background:#FFF3E0;color:#7A4500}
+.card{background:#252545;border-radius:12px;padding:14px;margin-bottom:12px;border:1px solid #333}
+.card h4{font-size:14px;color:#0F6E56;margin-bottom:8px}
+.badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:bold}
+.badge-req{background:#333;color:#aaa}
+.badge-app{background:#E8F5EE;color:#1E6B3C}
+.badge-rej{background:#FDECEA;color:#8B1A1A}
+.badge-iss{background:#E8F0FE;color:#0D47A1}
+.badge-par{background:#FFF3E0;color:#7A4500}
+.table-wrap{overflow-x:auto;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1A1A2E;color:#0F6E56;padding:8px 6px;text-align:left;white-space:nowrap}
+td{padding:7px 6px;border-bottom:1px solid #333;vertical-align:middle}
+tr:nth-child(even) td{background:#1e1e3a}
+.serial-item{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:#1A1A2E;border-radius:6px;margin-bottom:6px}
+.serial-item .ok{color:#0F6E56;font-size:13px}
+.serial-item .dup{color:#8B1A1A;font-size:13px}
+.remove-btn{background:none;border:none;color:#8B1A1A;font-size:18px;cursor:pointer;padding:0 4px}
+.scan-box{background:#1A1A2E;border-radius:10px;padding:14px;margin-bottom:12px;border:1px dashed #0F6E56}
+#qr-reader{width:100%;border-radius:8px;overflow:hidden;margin-bottom:10px}
+.count-badge{background:#0F6E56;color:#fff;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:bold;display:inline-block;margin-bottom:8px}
+.stage-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qc-item{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#1A1A2E;border-radius:8px;margin-bottom:8px}
+.qc-label{font-size:13px;flex:1}
+.qc-toggle{display:flex;gap:6px}
+.qc-btn{padding:6px 14px;border:none;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;opacity:0.4}
+.qc-btn.active{opacity:1}
+.qc-pass{background:#0F6E56;color:#fff}
+.qc-fail{background:#8B1A1A;color:#fff}
+.tabs{display:flex;border-bottom:2px solid #333;margin-bottom:14px}
+.tab{padding:10px 16px;cursor:pointer;font-size:13px;font-weight:bold;color:#aaa;border-bottom:2px solid transparent;margin-bottom:-2px}
+.tab.active{color:#0F6E56;border-bottom-color:#0F6E56}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.install-bar{background:#1565C0;padding:10px 16px;display:none;align-items:center;justify-content:space-between;font-size:13px}
+.install-bar.show{display:flex}
+.install-btn{background:#fff;color:#1565C0;border:none;padding:6px 14px;border-radius:6px;font-weight:bold;cursor:pointer}
+.loader{text-align:center;padding:30px;color:#aaa;font-size:14px}
+.divider{text-align:center;color:#555;font-size:12px;margin:10px 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#333}
+.divider::before{left:0}
+.divider::after{right:0}
+.flash-overlay{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity 0.3s;z-index:999}
+footer{text-align:center;padding:20px;color:#555;font-size:11px}
+</style>
+</head>
+<body>
+
+<div class="flash-overlay" id="flashOverlay"></div>
+
+<!-- INSTALL BAR -->
+<div class="install-bar" id="installBar">
+  <span>📱 Add VAAGN ERP to home screen</span>
+  <button class="install-btn" onclick="installApp()">Add</button>
+</div>
+
+<!-- ==================== HOME SCREEN ==================== -->
+<div class="screen active" id="screen-home">
+  <div class="logo-header">
+    <h1>⚡ VAAGN ERP</h1>
+    <p>Vaagn Auto Pvt. Ltd. — Factory ERP</p>
+  </div>
+  <div class="container">
+    <p style="text-align:center;color:#aaa;font-size:13px;margin-bottom:16px">Select your role to continue</p>
+    <div class="role-grid">
+      <button class="role-card" onclick="showScreen('screen-store')">
+        <div class="role-icon">🏪</div>
+        <div class="role-name">Store Keeper</div>
+        <div class="role-desc">Receipts & Movement</div>
+      </button>
+      <button class="role-card" onclick="showScreen('screen-purchase')">
+        <div class="role-icon">🛒</div>
+        <div class="role-name">Purchase</div>
+        <div class="role-desc">New Purchase Orders</div>
+      </button>
+      <button class="role-card" onclick="showScreen('screen-assembly')">
+        <div class="role-icon">🔧</div>
+        <div class="role-name">Assembly</div>
+        <div class="role-desc">Vehicle Assembly</div>
+      </button>
+      <button class="role-card" onclick="showScreen('screen-qc')">
+        <div class="role-icon">✅</div>
+        <div class="role-name">Quality Check</div>
+        <div class="role-desc">Final QC Inspection</div>
+      </button>
+      <button class="role-card" onclick="showScreen('screen-dispatch')">
+        <div class="role-icon">🚚</div>
+        <div class="role-name">Dispatch</div>
+        <div class="role-desc">Vehicle Dispatch</div>
+      </button>
+      <button class="role-card" onclick="showScreen('screen-movement')">
+        <div class="role-icon">📤</div>
+        <div class="role-name">Material Movement</div>
+        <div class="role-desc">Issue Materials</div>
+      </button>
+    </div>
+  </div>
+  <footer>VAAGN Auto Pvt. Ltd. © 2026</footer>
+</div>
+
+<!-- ==================== STORE RECEIPT ==================== -->
+<div class="screen" id="screen-store">
+  <div class="header">
+    <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+    <h2>🏪 Store Receipt</h2>
+  </div>
+  <div class="container">
+    <div class="form-group">
+      <label>Purchase Order *</label>
+      <select id="str-po">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Received By *</label>
+      <input type="text" id="str-recby" placeholder="Your name">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>Qty Received *</label>
+        <input type="number" id="str-recv" min="1" oninput="updateStoreSerial()">
+      </div>
+      <div class="form-group">
+        <label>Qty Accepted *</label>
+        <input type="number" id="str-acc" min="0" oninput="updateStoreSerial()">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>Qty Rejected</label>
+        <input type="number" id="str-rej" min="0" value="0">
+      </div>
+      <div class="form-group">
+        <label>Condition</label>
+        <select id="str-cond">
+          <option value="Good">Good</option>
+          <option value="Damaged">Damaged</option>
+          <option value="Partial">Partial</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="str-rej-reason-box" style="display:none">
+      <label>Rejection Reason</label>
+      <input type="text" id="str-rej-reason" placeholder="Reason for rejection">
+    </div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="str-status">
+        <option value="Accepted">Accepted</option>
+        <option value="Partial">Partial</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
+
+    <!-- SERIAL SECTION -->
+    <div id="str-serial-section" style="display:none">
+      <div class="card">
+        <h4>📦 Manufacturer Serials</h4>
+        <div class="count-badge" id="str-serial-count">0 / 0 serials</div>
+        <div id="str-serial-list" style="margin:10px 0"></div>
+
+        <div class="scan-box">
+          <div id="str-qr-reader"></div>
+          <button class="btn btn-secondary" id="str-scan-btn" onclick="startStoreScanner()">
+            📷 Start Camera Scan
+          </button>
+          <button class="btn btn-danger" id="str-scan-stop" style="display:none" onclick="stopStoreScanner()">
+            ⏹ Stop Scanner
+          </button>
+          <div class="divider">OR</div>
+          <input type="text" id="str-manual-serial" placeholder="Type serial and press Enter">
+          <button class="btn btn-grey" style="margin-top:8px" onclick="addManualSerial()">
+            ✏️ Add Serial
+          </button>
+        </div>
+        <div id="str-scan-msg" class="msg"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Remarks</label>
+      <textarea id="str-remarks" rows="2" placeholder="Optional remarks"></textarea>
+    </div>
+    <div id="str-msg" class="msg"></div>
+    <button class="btn btn-primary" onclick="saveStoreReceipt()">💾 Save Store Receipt</button>
+  </div>
+</div>
+
+<!-- ==================== PURCHASE ==================== -->
+<div class="screen" id="screen-purchase">
+  <div class="header">
+    <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+    <h2>🛒 New Purchase</h2>
+  </div>
+  <div class="container">
+    <div class="card" style="background:#1B5E20;border-color:#0F6E56">
+      <div style="font-size:12px;color:#cfc">Purchase ID</div>
+      <div id="pur-id" style="font-size:18px;font-weight:bold">Loading...</div>
+    </div>
+    <div class="form-group">
+      <label>Supplier *</label>
+      <select id="pur-sup" onchange="loadPurComponents()">
+        <option value="">Loading suppliers...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Component *</label>
+      <select id="pur-cmp">
+        <option value="">— Select supplier first —</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>Quantity *</label>
+        <input type="number" id="pur-qty" min="1">
+      </div>
+      <div class="form-group">
+        <label>Expected Delivery *</label>
+        <input type="date" id="pur-date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Upload Quotation</label>
+      <input type="file" id="pur-file" accept=".pdf,.jpg,.jpeg,.png" onchange="handlePurFile()" style="background:#1A1A2E">
+      <div id="pur-file-msg" class="msg" style="margin-top:6px"></div>
+    </div>
+    <div class="form-group">
+      <label>Remarks</label>
+      <textarea id="pur-remarks" rows="2"></textarea>
+    </div>
+    <div id="pur-msg" class="msg"></div>
+    <button class="btn btn-primary" onclick="savePurchase()">💾 Save Purchase</button>
+  </div>
+</div>
+
+<!-- ==================== ASSEMBLY ==================== -->
+<div class="screen" id="screen-assembly">
+  <div class="header">
+    <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+    <h2>🔧 Assembly Record</h2>
+  </div>
+  <div class="container">
+    <div class="form-group">
+      <label>Production Order *</label>
+      <select id="asm-po" onchange="loadAsmSerials()">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Chassis Serial *</label>
+      <select id="asm-chs">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Assigned Technician *</label>
+      <input type="text" id="asm-tech" placeholder="Technician name">
+    </div>
+    <div class="card">
+      <h4>🔩 Component Serials</h4>
+      <div class="form-group">
+        <label>Motor Serial</label>
+        <select id="asm-mot"><option value="">— Select —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Battery Serial</label>
+        <select id="asm-bat"><option value="">— Select —</option></select>
+      </div>
+      <div class="form-group">
+        <label>Controller Serial</label>
+        <select id="asm-con"><option value="">— Select —</option></select>
+      </div>
+    </div>
+    <div class="card">
+      <h4>📋 Stage Status</h4>
+      <div class="stage-grid">
+        <div class="form-group">
+          <label>Fabrication</label>
+          <select id="asm-s1">
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Paint</label>
+          <select id="asm-s2">
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Transmission</label>
+          <select id="asm-s3">
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assembly</label>
+          <select id="asm-s4">
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>QC Stage</label>
+          <select id="asm-s5">
+            <option>Not Started</option>
+            <option>In Progress</option>
+            <option>Done</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Remarks</label>
+      <textarea id="asm-remarks" rows="2"></textarea>
+    </div>
+    <div id="asm-msg" class="msg"></div>
+    <button class="btn btn-primary" onclick="saveAssembly()">💾 Save Assembly Record</button>
+  </div>
+</div>
+
+<!-- ==================== FINAL QC ==================== -->
+<div class="screen" id="screen-qc">
+  <div class="header">
+    <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+    <h2>✅ Final QC</h2>
+  </div>
+  <div class="container">
+    <div class="form-group">
+      <label>Vehicle (Assembly) *</label>
+      <select id="qc-asm">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Inspected By *</label>
+      <input type="text" id="qc-insp" placeholder="Inspector name">
+    </div>
+    <div class="card">
+      <h4>🔍 Inspection Checklist</h4>
+      <div id="qc-checks"></div>
+    </div>
+    <div class="form-group">
+      <label>Overall Result *</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px">
+        <button class="btn btn-primary" id="qc-pass-btn" onclick="setQCResult('Pass')" style="opacity:0.5">✅ PASS</button>
+        <button class="btn btn-danger" id="qc-fail-btn" onclick="setQCResult('Fail')" style="opacity:0.5">❌ FAIL</button>
+      </div>
+    </div>
+    <div class="form-group" id="qc-fail-reason-box" style="display:none">
+      <label>Fail Reason *</label>
+      <textarea id="qc-fail-reason" rows="2" placeholder="Describe the issue"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Remarks</label>
+      <textarea id="qc-remarks" rows="2"></textarea>
+    </div>
+    <div id="qc-msg" class="msg"></div>
+    <button class="btn btn-primary" onclick="saveQC()">💾 Submit QC Result</button>
+  </div>
+</div>
+
+<!-- ==================== DISPATCH ==================== -->
+<div class="screen" id="screen-dispatch">
+  <div class="header">
+    <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+    <h2>🚚 Dispatch Vehicle</h2>
+  </div>
+  <div class="container">
+    <div class="form-group">
+      <label>Vehicle *</label>
+      <select id="dsp-veh">
+        <option value="">Loading...</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Customer Name *</label>
+      <input type="text" id="dsp-cname" placeholder="Customer name">
+    </div>
+    <div class="form-group">
+      <label>Customer Phone *</label>
+      <input type="tel" id="dsp-cphone" placeholder="Phone number">
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <input type="text" id="dsp-cloc" placeholder="City / District">
+    </div>
+    <div class="form-group">
+      <label>Transporter</label>
+      <input type="text" id="dsp-trans" placeholder="Transporter name">
+    </div>
+    <div class="form-group">
+      <label>LR Number</label>
+      <input type="text" id="dsp-lr" placeholder="LR/Docket number">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>Dispatch Date</label>
+        <input type="date" id="dsp-date">
+      </div>
+      <div class="form-group">
+        <label>Expected Delivery</label>
+        <input type="date" id="dsp-deldate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Decision *</label>
+      <select id="dsp-decision">
+        <option value="Dispatched">Dispatched</option>
+        <option value="Allocated">Allocated</option>
+        <option value="Hold">Hold</option>
+      </select>
+    </div>
+    <div class="form-group" id="dsp-hold-box" style="display:none">
+      <label>Hold Reason *</label>
+      <input type="text" id="dsp-hold-reason" placeholder="Reason for hold">
+    </div>
+    <div id="dsp-msg" class="msg"></div>
+    <button class="btn btn-primary" onclick="saveDispatch()">💾 Save Dispatch</button>
+  </div>
+</div>
+
+<!-- ==================== MATERIAL MOVEMENT ==================== -->
+<div class="screen" id="screen-movement">
+  <div class="header">
+    <button class="back-btn" onclick="showScreen('screen-home')">←</button>
+    <h2>📤 Material Movement</h2>
+  </div>
+  <div class="container">
+    <div class="tabs">
+      <div class="tab active" onclick="movTab(0)">📋 Request</div>
+      <div class="tab" onclick="movTab(1)">✅ Review / Issue</div>
+    </div>
+
+    <!-- REQUEST TAB -->
+    <div class="tab-content active" id="mov-tab-0">
+      <div class="form-group">
+        <label>Production Order *</label>
+        <select id="mov-po">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Requested By *</label>
+        <input type="text" id="mov-reqby" placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label>Remarks</label>
+        <textarea id="mov-remarks" rows="2"></textarea>
+      </div>
+      <div id="mov-req-msg" class="msg"></div>
+      <button class="btn btn-primary" onclick="requestAllBOM()">
+        📦 Request All BOM Components
+      </button>
+      <div class="divider" style="margin:14px 0">OR single component</div>
+      <div class="form-group">
+        <label>Component</label>
+        <select id="mov-cmp">
+          <option value="">— Select Component —</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quantity</label>
+        <input type="number" id="mov-qty" min="1">
+      </div>
+      <div id="mov-single-msg" class="msg"></div>
+      <button class="btn btn-secondary" onclick="requestSingle()">Submit Single Request</button>
+    </div>
+
+    <!-- REVIEW/ISSUE TAB -->
+    <div class="tab-content" id="mov-tab-1">
+      <div class="form-group">
+        <label>Movement *</label>
+        <select id="mov-sel" onchange="loadMovDetails()">
+          <option value="">Loading...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Reviewed By *</label>
+        <input type="text" id="mov-revby" placeholder="Your name">
+      </div>
+      <div id="mov-details-table"></div>
+      <div id="mov-approve-msg" class="msg"></div>
+      <button class="btn btn-primary" onclick="approveAll()">✅ Approve All Available</button>
+      <button class="btn btn-secondary" style="margin-top:8px" onclick="issueAll()">📤 Issue All Bulk</button>
+      <button class="btn btn-warning" style="margin-top:8px" onclick="reRequest()">🔄 Re-request Out of Stock</button>
+      <div id="mov-issue-msg" class="msg"></div>
+
+      <!-- Serial section -->
+      <div id="mov-serial-section" style="display:none;margin-top:14px">
+        <div class="card">
+          <h4>🔢 Serial Items Needing Issue</h4>
+          <div id="mov-serial-inputs"></div>
+          <div id="mov-serial-msg" class="msg"></div>
+          <button class="btn btn-warning" onclick="issueSerials()">Issue Serial Items</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== CONFIG ====================
+var API = 'https://script.google.com/macros/s/AKfycbw7CconuCQ23KkzTFSuwjbslqSGtzDoPAy3aA7Ka3JZ11ott5dmBReQgtoIxB-p9UM3/exec';
+var storeSerials = [];
+var storeNeedQty = 0;
+var storeIsManufacturer = false;
+var qcResult = '';
+var qcChecks = ['Frame & Chassis','Electrical System','Brakes','Motor & Controller','Battery & Charging','Lights & Indicators','Body & Paint','Final Road Test'];
+var qcValues = {};
+var html5QrCode = null;
+var purFileData = null;
+var pendingSerialItems = [];
+
+// ==================== API CALL ====================
+function api(action, data) {
+  return fetch(API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: action, data: data || {} })
+  }).then(function(r) { return r.json(); });
+}
+
+// ==================== UTILS ====================
+function $(id) { return document.getElementById(id); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  $(id).classList.add('active');
+  window.scrollTo(0, 0);
+
+  // Load data for screen
+  if (id === 'screen-store') loadStoreData();
+  if (id === 'screen-purchase') loadPurchaseData();
+  if (id === 'screen-assembly') loadAssemblyData();
+  if (id === 'screen-qc') loadQCData();
+  if (id === 'screen-dispatch') loadDispatchData();
+  if (id === 'screen-movement') loadMovementData();
+}
+
+function showMsg(elId, text, type) {
+  var el = $(elId);
+  el.className = 'msg show ' + type;
+  el.textContent = text;
+}
+
+function hideMsg(elId) {
+  var el = $(elId);
+  el.className = 'msg';
+  el.textContent = '';
+}
+
+function flashScreen(color) {
+  var el = $('flashOverlay');
+  el.style.background = color;
+  el.style.opacity = '0.3';
+  setTimeout(function() { el.style.opacity = '0'; }, 300);
+}
+
+function playBeep(type) {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    if (type === 'success') {
+      osc.frequency.value = 1200; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(); osc.stop(ctx.currentTime + 0.1);
+    } else if (type === 'error') {
+      osc.frequency.value = 300; osc.type = 'square';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+      osc.start(); osc.stop(ctx.currentTime + 0.3);
+    } else if (type === 'complete') {
+      [523, 659, 784].forEach(function(f, i) {
+        var o = ctx.createOscillator();
+        var g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.frequency.value = f; o.type = 'sine';
+        g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.15);
+        o.start(ctx.currentTime + i * 0.15);
+        o.stop(ctx.currentTime + i * 0.15 + 0.15);
+      });
+    }
+  } catch(e) {}
+}
+
+function populateSelect(elId, items, valKey, labelKey, placeholder) {
+  var el = $(elId);
+  el.innerHTML = '<option value="">' + (placeholder || '— Select —') + '</option>';
+  items.forEach(function(item) {
+    var opt = document.createElement('option');
+    opt.value = item[valKey];
+    opt.textContent = item[labelKey];
+    el.appendChild(opt);
+  });
+}
+
+// ==================== STORE RECEIPT ====================
+function loadStoreData() {
+  storeSerials = [];
+  storeNeedQty = 0;
+  renderStoreSerials();
+  $('str-serial-section').style.display = 'none';
+
+  api('getOpenPurchases').then(function(data) {
+    var el = $('str-po');
+    el.innerHTML = '<option value="">— Select PO —</option>';
+    if (data && data.length) {
+      data.forEach(function(po) {
+        var opt = document.createElement('option');
+        opt.value = po.id;
+        opt.textContent = po.id + ' — ' + po.supplierName + ' — ' + po.componentName;
+        opt.dataset.component = po.componentName;
+        opt.dataset.componentId = po.componentId;
+        opt.dataset.qty = po.qty;
+        el.appendChild(opt);
+      });
+    }
+  }).catch(function() {
+    $('str-po').innerHTML = '<option value="">Error loading POs</option>';
+  });
+
+  $('str-po').onchange = function() {
+    var sel = this.options[this.selectedIndex];
+    if (!sel || !sel.value) { $('str-serial-section').style.display = 'none'; return; }
+    checkIfSerialNeeded(sel.dataset.componentId, sel.dataset.componentName);
+  };
+
+  $('str-rej').oninput = function() {
+    var rej = parseInt(this.value) || 0;
+    $('str-rej-reason-box').style.display = rej > 0 ? 'block' : 'none';
+  };
+}
+
+function checkIfSerialNeeded(cmpId, cmpName) {
+  api('getActiveComponents').then(function(cmps) {
+    var cmp = cmps.find(function(c) { return c.id === cmpId; });
+    if (cmp && (cmp.serialType === 'Internal' || cmp.serialType === 'Manufacturer')) {
+      storeIsManufacturer = cmp.serialType === 'Manufacturer';
+      $('str-serial-section').style.display = 'block';
+      updateStoreSerial();
+    } else {
+      $('str-serial-section').style.display = 'none';
+      storeIsManufacturer = false;
+    }
+  });
+}
+
+function updateStoreSerial() {
+  var acc = parseInt($('str-acc').value) || 0;
+  storeNeedQty = acc;
+  updateSerialCount();
+}
+
+function updateSerialCount() {
+  var valid = storeSerials.filter(function(s) { return !s.dup; }).length;
+  $('str-serial-count').textContent = valid + ' / ' + storeNeedQty + ' serials';
+}
+
+function renderStoreSerials() {
+  var el = $('str-serial-list');
+  el.innerHTML = '';
+  if (!storeSerials.length) {
+    el.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:8px">No serials added yet</div>';
+    return;
+  }
+  storeSerials.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'serial-item';
+    div.innerHTML =
+      '<span class="' + (s.dup ? 'dup' : 'ok') + '">' +
+      (s.dup ? '⚠ DUP: ' : '✓ ') + s.serial + '</span>' +
+      '<button class="remove-btn" onclick="removeStoreSerial(' + i + ')">×</button>';
+    el.appendChild(div);
+  });
+}
+
+function removeStoreSerial(idx) {
+  storeSerials.splice(idx, 1);
+  renderStoreSerials();
+  updateSerialCount();
+}
+
+function addStoreSerial(serial) {
+  if (!serial || !serial.trim()) return;
+  serial = serial.trim().toUpperCase();
+
+  var isDupLocal = storeSerials.some(function(s) {
+    return s.serial.toLowerCase() === serial.toLowerCase();
+  });
+  if (isDupLocal) {
+    showMsg('str-scan-msg', '⚠ Already in this list: ' + serial, 'warn');
+    playBeep('error'); flashScreen('#ff0000');
+    return;
+  }
+
+  if (storeSerials.filter(function(s){return !s.dup;}).length >= storeNeedQty && storeNeedQty > 0) {
+    showMsg('str-scan-msg', '⚠ Already have ' + storeNeedQty + ' serials. Remove one first.', 'warn');
+    playBeep('error');
+    return;
+  }
+
+  api('checkDuplicateSerial', { serial: serial }).then(function(isDup) {
+    storeSerials.push({ serial: serial, dup: isDup });
+    renderStoreSerials();
+    updateSerialCount();
+    if (isDup) {
+      showMsg('str-scan-msg', '✗ DUPLICATE in Inventory: ' + serial, 'err');
+      playBeep('error'); flashScreen('#ff0000');
+    } else {
+      showMsg('str-scan-msg', '✓ Added: ' + serial, 'ok');
+      playBeep('success'); flashScreen('#00ff00');
+      var valid = storeSerials.filter(function(s){return !s.dup;}).length;
+      if (storeNeedQty > 0 && valid >= storeNeedQty) {
+        setTimeout(function() { playBeep('complete'); }, 200);
+        showMsg('str-scan-msg', '✅ All ' + storeNeedQty + ' serials collected!', 'ok');
+      }
+    }
+  }).catch(function() {
+    storeSerials.push({ serial: serial, dup: false });
+    renderStoreSerials();
+    updateSerialCount();
+    showMsg('str-scan-msg', '✓ Added: ' + serial + ' (offline check)', 'ok');
+    playBeep('success');
+  });
+}
+
+function addManualSerial() {
+  var val = $('str-manual-serial').value.trim();
+  if (!val) return;
+  addStoreSerial(val);
+  $('str-manual-serial').value = '';
+}
+
+$('str-manual-serial') && document.getElementById('str-manual-serial').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') { addManualSerial(); }
+});
+
+function startStoreScanner() {
+  html5QrCode = new Html5Qrcode('str-qr-reader');
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 280, height: 120 } },
+    function(text) { addStoreSerial(text); }
+  ).then(function() {
+    $('str-scan-btn').style.display = 'none';
+    $('str-scan-stop').style.display = 'block';
+    showMsg('str-scan-msg', '📷 Camera active — point at barcode', 'info');
+  }).catch(function(err) {
+    showMsg('str-scan-msg', '✗ Camera error: ' + err, 'err');
+  });
+}
+
+function stopStoreScanner() {
+  if (html5QrCode) {
+    html5QrCode.stop().then(function() {
+      $('str-scan-btn').style.display = 'block';
+      $('str-scan-stop').style.display = 'none';
+      showMsg('str-scan-msg', 'Scanner stopped.', 'info');
+      html5QrCode = null;
+    });
+  }
+}
+
+function saveStoreReceipt() {
+  var po = $('str-po').value;
+  var recby = $('str-recby').value.trim();
+  var recv = parseInt($('str-recv').value) || 0;
+  var acc = parseInt($('str-acc').value) || 0;
+  var rej = parseInt($('str-rej').value) || 0;
+
+  if (!po) { showMsg('str-msg', '✗ Select a Purchase Order', 'err'); return; }
+  if (!recby) { showMsg('str-msg', '✗ Enter Received By name', 'err'); return; }
+  if (!recv) { showMsg('str-msg', '✗ Enter quantity received', 'err'); return; }
+
+  var validSerials = storeSerials.filter(function(s){return !s.dup;}).map(function(s){return s.serial;});
+  var serialStr = validSerials.join(', ');
+
+  showMsg('str-msg', 'Saving...', 'info');
+
+  var payload = {
+    purchase_id: po,
+    received_by: recby,
+    qty_received: recv,
+    qty_accepted: acc,
+    qty_rejected: rej,
+    rejection_reason: $('str-rej-reason').value,
+    condition: $('str-cond').value,
+    status: $('str-status').value,
+    manufacturer_serials: serialStr,
+    remarks: $('str-remarks').value
+  };
+
+  api('saveStoreReceipt', payload).then(function(r) {
+    if (r.success) {
+      showMsg('str-msg', '✓ Receipt ' + r.id + ' saved successfully!', 'ok');
+      playBeep('complete');
+      storeSerials = [];
+      renderStoreSerials();
+      if (html5QrCode) stopStoreScanner();
+      setTimeout(function() { showScreen('screen-home'); }, 2000);
+    } else {
+      showMsg('str-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('str-msg', '✗ Error: ' + e.message, 'err');
+  });
+}
+
+// ==================== PURCHASE ====================
+function loadPurchaseData() {
+  api('getNextPurchaseId').then(function(id) {
+    $('pur-id').textContent = id || 'PUR-001';
+  });
+  api('getActiveSuppliers').then(function(data) {
+    if (data && data.length) {
+      populateSelect('pur-sup', data, 'id', 'name', '— Select Supplier —');
+    }
+  });
+  purFileData = null;
+}
+
+function loadPurComponents() {
+  var supId = $('pur-sup').value;
+  if (!supId) return;
+  $('pur-cmp').innerHTML = '<option value="">Loading...</option>';
+  api('getComponentsBySupplier', { supplierId: supId }).then(function(data) {
+    if (data && data.length) {
+      populateSelect('pur-cmp', data, 'id', 'name', '— Select Component —');
+    } else {
+      $('pur-cmp').innerHTML = '<option value="">No components mapped</option>';
+    }
+  });
+}
+
+function handlePurFile() {
+  var file = $('pur-file').files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showMsg('pur-file-msg', '✗ File too large. Max 5MB.', 'err');
+    return;
+  }
+  showMsg('pur-file-msg', 'Uploading...', 'info');
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64 = e.target.result.split(',')[1];
+    var pid = $('pur-id').textContent;
+    var cmpName = $('pur-cmp').options[$('pur-cmp').selectedIndex] ?
+      $('pur-cmp').options[$('pur-cmp').selectedIndex].text : 'quotation';
+    var supName = $('pur-sup').options[$('pur-sup').selectedIndex] ?
+      $('pur-sup').options[$('pur-sup').selectedIndex].text : 'supplier';
+    var ext = file.name.split('.').pop();
+    var fname = pid + ' — ' + cmpName + ' — ' + supName + '.' + ext;
+    api('uploadQuotationFile', { base64Data: b64, fileName: fname, mimeType: file.type })
+      .then(function(r) {
+        if (r.success) {
+          purFileData = r.url;
+          showMsg('pur-file-msg', '✓ Uploaded: ' + fname, 'ok');
+        } else {
+          showMsg('pur-file-msg', '✗ Upload failed: ' + r.error, 'err');
+        }
+      });
+  };
+  reader.readAsDataURL(file);
+}
+
+function savePurchase() {
+  var sup = $('pur-sup').value;
+  var cmp = $('pur-cmp').value;
+  var qty = $('pur-qty').value;
+  var date = $('pur-date').value;
+  if (!sup || !cmp || !qty || !date) {
+    showMsg('pur-msg', '✗ Fill all required fields', 'err'); return;
+  }
+  showMsg('pur-msg', 'Saving...', 'info');
+  api('savePurchase', {
+    supplier_id: sup,
+    component_id: cmp,
+    qty_ordered: qty,
+    expected_delivery: date,
+    quotation_link: purFileData || '',
+    remarks: $('pur-remarks').value
+  }).then(function(r) {
+    if (r.success) {
+      showMsg('pur-msg', '✓ ' + r.id + ' saved. Status: Pending Approval.', 'ok');
+      setTimeout(function() { showScreen('screen-home'); }, 2000);
+    } else {
+      showMsg('pur-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('pur-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+// ==================== ASSEMBLY ====================
+function loadAssemblyData() {
+  api('getOpenProductionOrders').then(function(data) {
+    if (data && data.length) {
+      populateSelect('asm-po', data, 'id', 'label', '— Select Production Order —');
+    } else {
+      $('asm-po').innerHTML = '<option value="">No active production orders</option>';
+    }
+  });
+  api('getAvailableSerialsByComponent', { componentName: 'Chassis' }).then(function(data) {
+    var el = $('asm-chs');
+    el.innerHTML = '<option value="">— Select Chassis —</option>';
+    if (!data || !data.length) {
+      el.innerHTML = '<option value="">No chassis available</option>'; return;
+    }
+    data.forEach(function(s) {
+      var o = document.createElement('option');
+      o.value = s.serial; o.textContent = s.serial;
+      el.appendChild(o);
+    });
+  });
+}
+
+function loadAsmSerials() {
+  api('getIssuedSerialsByComponent', { componentName: '1.2 kW Motor' }).then(function(d) {
+    var el = $('asm-mot');
+    el.innerHTML = '<option value="">— Select Motor Serial —</option>';
+    (d || []).forEach(function(s) {
+      var o = document.createElement('option');
+      o.value = s.serial; o.textContent = s.serial;
+      el.appendChild(o);
+    });
+  });
+  api('getIssuedSerialsByComponent', { componentName: 'Battery' }).then(function(d) {
+    var el = $('asm-bat');
+    el.innerHTML = '<option value="">— Select Battery Serial —</option>';
+    (d || []).forEach(function(s) {
+      var o = document.createElement('option');
+      o.value = s.serial; o.textContent = s.serial;
+      el.appendChild(o);
+    });
+  });
+  api('getIssuedSerialsByComponent', { componentName: 'Controller' }).then(function(d) {
+    var el = $('asm-con');
+    el.innerHTML = '<option value="">— Select Controller Serial —</option>';
+    (d || []).forEach(function(s) {
+      var o = document.createElement('option');
+      o.value = s.serial; o.textContent = s.serial;
+      el.appendChild(o);
+    });
+  });
+}
+
+function saveAssembly() {
+  var po = $('asm-po').value;
+  var chs = $('asm-chs').value;
+  var tech = $('asm-tech').value.trim();
+  if (!po || !chs || !tech) {
+    showMsg('asm-msg', '✗ Fill all required fields', 'err'); return;
+  }
+  showMsg('asm-msg', 'Saving...', 'info');
+  api('saveAssemblyRecord', {
+    production_id: po,
+    chassis_serial: chs,
+    motor_serial: $('asm-mot').value,
+    battery_serial: $('asm-bat').value,
+    controller_serial: $('asm-con').value,
+    assigned_technician: tech,
+    stage_fabrication: $('asm-s1').value,
+    stage_paint: $('asm-s2').value,
+    stage_transmission: $('asm-s3').value,
+    stage_assembly: $('asm-s4').value,
+    stage_qc: $('asm-s5').value,
+    remarks: $('asm-remarks').value
+  }).then(function(r) {
+    if (r.success) {
+      showMsg('asm-msg', '✓ Assembly record ' + r.id + ' saved!', 'ok');
+      setTimeout(function() { showScreen('screen-home'); }, 2000);
+    } else {
+      showMsg('asm-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('asm-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+// ==================== FINAL QC ====================
+function loadQCData() {
+  qcResult = '';
+  qcValues = {};
+  $('qc-pass-btn').style.opacity = '0.5';
+  $('qc-fail-btn').style.opacity = '0.5';
+  $('qc-fail-reason-box').style.display = 'none';
+
+  // Render QC checks
+  var el = $('qc-checks');
+  el.innerHTML = '';
+  qcChecks.forEach(function(check, i) {
+    qcValues['check_' + i] = '';
+    var div = document.createElement('div');
+    div.className = 'qc-item';
+    div.innerHTML =
+      '<span class="qc-label">' + (i+1) + '. ' + check + '</span>' +
+      '<div class="qc-toggle">' +
+      '<button class="qc-btn qc-pass" id="qcp_' + i + '" onclick="setCheck(' + i + ',\'Pass\')">PASS</button>' +
+      '<button class="qc-btn qc-fail" id="qcf_' + i + '" onclick="setCheck(' + i + ',\'Fail\')">FAIL</button>' +
+      '</div>';
+    el.appendChild(div);
+  });
+
+  api('getAssemblyReadyForQC').then(function(data) {
+    var el = $('qc-asm');
+    el.innerHTML = '<option value="">— Select Vehicle —</option>';
+    if (!data || !data.length) {
+      el.innerHTML = '<option value="">No vehicles ready for QC</option>'; return;
+    }
+    data.forEach(function(v) {
+      var o = document.createElement('option');
+      o.value = v.id;
+      o.textContent = v.id + ' — ' + v.chassisSerial + ' (' + v.model + ')';
+      el.appendChild(o);
+    });
+  });
+}
+
+function setCheck(idx, val) {
+  qcValues['check_' + idx] = val;
+  $('qcp_' + idx).style.opacity = val === 'Pass' ? '1' : '0.4';
+  $('qcf_' + idx).style.opacity = val === 'Fail' ? '1' : '0.4';
+}
+
+function setQCResult(val) {
+  qcResult = val;
+  $('qc-pass-btn').style.opacity = val === 'Pass' ? '1' : '0.5';
+  $('qc-fail-btn').style.opacity = val === 'Fail' ? '1' : '0.5';
+  $('qc-fail-reason-box').style.display = val === 'Fail' ? 'block' : 'none';
+}
+
+function saveQC() {
+  var asm = $('qc-asm').value;
+  var insp = $('qc-insp').value.trim();
+  if (!asm || !insp) { showMsg('qc-msg', '✗ Fill all required fields', 'err'); return; }
+  if (!qcResult) { showMsg('qc-msg', '✗ Select overall Pass or Fail', 'err'); return; }
+  if (qcResult === 'Fail' && !$('qc-fail-reason').value.trim()) {
+    showMsg('qc-msg', '✗ Enter fail reason', 'err'); return;
+  }
+  showMsg('qc-msg', 'Saving...', 'info');
+  var payload = {
+    assembly_id: asm,
+    inspected_by: insp,
+    overall_result: qcResult,
+    fail_reason: $('qc-fail-reason').value,
+    remarks: $('qc-remarks').value
+  };
+  qcChecks.forEach(function(c, i) {
+    payload['check_' + (i+1)] = qcValues['check_' + i] || 'Pass';
+  });
+  api('saveFinalQC', payload).then(function(r) {
+    if (r.success) {
+      showMsg('qc-msg', '✓ QC ' + r.id + ' saved. Result: ' + qcResult, 'ok');
+      setTimeout(function() { showScreen('screen-home'); }, 2000);
+    } else {
+      showMsg('qc-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('qc-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+// ==================== DISPATCH ====================
+function loadDispatchData() {
+  $('dsp-date').value = new Date().toISOString().split('T')[0];
+  $('dsp-decision').onchange = function() {
+    $('dsp-hold-box').style.display = this.value === 'Hold' ? 'block' : 'none';
+  };
+  api('getFinishedGoodsAvailable').then(function(data) {
+    var el = $('dsp-veh');
+    el.innerHTML = '<option value="">— Select Vehicle —</option>';
+    if (!data || !data.length) {
+      el.innerHTML = '<option value="">No vehicles in stock</option>'; return;
+    }
+    data.forEach(function(v) {
+      var o = document.createElement('option');
+      o.value = v.id;
+      o.textContent = v.id + ' — ' + v.chassisSerial + ' (' + v.status + ')';
+      el.appendChild(o);
+    });
+  });
+}
+
+function saveDispatch() {
+  var veh = $('dsp-veh').value;
+  var cname = $('dsp-cname').value.trim();
+  var cphone = $('dsp-cphone').value.trim();
+  var decision = $('dsp-decision').value;
+  if (!veh || !cname || !cphone) {
+    showMsg('dsp-msg', '✗ Fill all required fields', 'err'); return;
+  }
+  if (decision === 'Hold' && !$('dsp-hold-reason').value.trim()) {
+    showMsg('dsp-msg', '✗ Enter hold reason', 'err'); return;
+  }
+  showMsg('dsp-msg', 'Saving...', 'info');
+  api('saveDispatch', {
+    dispatch_id: veh,
+    customer_name: cname,
+    customer_phone: cphone,
+    customer_location: $('dsp-cloc').value,
+    transporter: $('dsp-trans').value,
+    lr_number: $('dsp-lr').value,
+    dispatch_date: $('dsp-date').value,
+    delivery_date: $('dsp-deldate').value,
+    decision: decision,
+    hold_reason: $('dsp-hold-reason').value
+  }).then(function(r) {
+    if (r.success) {
+      showMsg('dsp-msg', '✓ Dispatch saved successfully!', 'ok');
+      setTimeout(function() { showScreen('screen-home'); }, 2000);
+    } else {
+      showMsg('dsp-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('dsp-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+// ==================== MATERIAL MOVEMENT ====================
+function movTab(n) {
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    t.className = i === n ? 'tab active' : 'tab';
+  });
+  document.querySelectorAll('.tab-content').forEach(function(c, i) {
+    c.className = i === n ? 'tab-content active' : 'tab-content';
+  });
+  if (n === 1) loadMovReviewData();
+}
+
+function loadMovementData() {
+  api('getOpenProductionOrders').then(function(data) {
+    if (data && data.length) {
+      populateSelect('mov-po', data, 'id', 'label', '— Select Production Order —');
+    }
+  });
+  api('getActiveComponents').then(function(data) {
+    if (data && data.length) {
+      populateSelect('mov-cmp', data, 'id', 'name', '— Select Component —');
+    }
+  });
+}
+
+function loadMovReviewData() {
+  api('getProductionOrdersWithPendingMovements').then(function(data) {
+    var el = $('mov-sel');
+    el.innerHTML = '<option value="">— Select Movement —</option>';
+    if (!data || !data.length) {
+      el.innerHTML = '<option value="">No pending movements</option>'; return;
+    }
+    data.forEach(function(m) {
+      var o = document.createElement('option');
+      o.value = m.id;
+      o.textContent = m.id + ' — ' + m.model + ' (' + m.status + ') ' + m.issued + '/' + m.total;
+      el.appendChild(o);
+    });
+  });
+}
+
+function loadMovDetails() {
+  var movId = $('mov-sel').value;
+  if (!movId) { $('mov-details-table').innerHTML = ''; return; }
+  $('mov-details-table').innerHTML = '<div class="loader">Loading...</div>';
+  api('getMovementsByProduction', { productionId: movId }).then(function(data) {
+    if (!data || !data.length) {
+      $('mov-details-table').innerHTML = '<div style="color:#aaa;padding:10px">No details found</div>';
+      return;
+    }
+    var html = '<div class="table-wrap"><table><tr><th>Component</th><th>Req</th><th>Appr</th><th>Iss</th><th>Status</th></tr>';
+    data.forEach(function(d) {
+      var badgeClass = d.status === 'Approved' ? 'badge-app' :
+        d.status === 'Issued' ? 'badge-iss' :
+        d.status === 'Rejected' ? 'badge-rej' :
+        d.status === 'Partially Approved' ? 'badge-par' : 'badge-req';
+      html += '<tr><td>' + d.componentName + '</td><td>' + d.qtyRequested +
+        '</td><td>' + d.qtyApproved + '</td><td>' + d.qtyIssued +
+        '</td><td><span class="badge ' + badgeClass + '">' + d.status + '</span></td></tr>';
+    });
+    html += '</table></div>';
+    $('mov-details-table').innerHTML = html;
+  });
+}
+
+function requestAllBOM() {
+  var po = $('mov-po').value;
+  var rb = $('mov-reqby').value.trim();
+  if (!po || !rb) { showMsg('mov-req-msg', '✗ Select production order and enter your name', 'err'); return; }
+  showMsg('mov-req-msg', 'Creating BOM requests...', 'info');
+  api('saveBOMMovementRequest', {
+    production_id: po, requested_by: rb, remarks: $('mov-remarks').value
+  }).then(function(r) {
+    if (r.success) {
+      showMsg('mov-req-msg', '✓ ' + (r.message || r.id + ' created with ' + r.components + ' requests'), 'ok');
+    } else {
+      showMsg('mov-req-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('mov-req-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+function requestSingle() {
+  var po = $('mov-po').value;
+  var cmp = $('mov-cmp').value;
+  var qty = $('mov-qty').value;
+  var rb = $('mov-reqby').value.trim();
+  if (!po || !cmp || !qty || !rb) {
+    showMsg('mov-single-msg', '✗ Fill all fields', 'err'); return;
+  }
+  showMsg('mov-single-msg', 'Submitting...', 'info');
+  api('saveMovementRequest', {
+    production_id: po, component_id: cmp,
+    qty_requested: qty, requested_by: rb
+  }).then(function(r) {
+    if (r.success) {
+      showMsg('mov-single-msg', '✓ Request ' + r.id + ' submitted', 'ok');
+    } else {
+      showMsg('mov-single-msg', '✗ ' + r.error, 'err');
+    }
+  });
+}
+
+function approveAll() {
+  var movId = $('mov-sel').value;
+  var rvb = $('mov-revby').value.trim();
+  if (!movId || !rvb) { showMsg('mov-approve-msg', '✗ Select movement and enter reviewer name', 'err'); return; }
+  showMsg('mov-approve-msg', 'Approving...', 'info');
+  api('bulkApproveMovements', { movementId: movId, reviewedBy: rvb }).then(function(r) {
+    if (r.success) {
+      showMsg('mov-approve-msg',
+        '✓ Approved: ' + r.approved + ' | Partial: ' + r.partial + ' | Rejected: ' + r.rejected, 'ok');
+      loadMovDetails();
+    } else {
+      showMsg('mov-approve-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('mov-approve-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+function issueAll() {
+  var movId = $('mov-sel').value;
+  if (!movId) return;
+  showMsg('mov-issue-msg', 'Issuing bulk items...', 'info');
+  api('bulkIssueMovements', { movementId: movId }).then(function(r) {
+    if (r.success) {
+      var msg = '✓ Bulk issued: ' + r.issued + ' item(s).';
+      if (r.serialNeeded && r.serialNeeded.length > 0) {
+        msg += ' ⚠ ' + r.serialNeeded.length + ' serial item(s) need entry below.';
+        pendingSerialItems = r.serialNeeded;
+        renderSerialInputs();
+        $('mov-serial-section').style.display = 'block';
+      } else {
+        $('mov-serial-section').style.display = 'none';
+      }
+      showMsg('mov-issue-msg', msg, 'ok');
+      loadMovDetails();
+    } else {
+      showMsg('mov-issue-msg', '✗ ' + r.error, 'err');
+    }
+  }).catch(function(e) {
+    showMsg('mov-issue-msg', '✗ ' + e.message, 'err');
+  });
+}
+
+function reRequest() {
+  var movId = $('mov-sel').value;
+  if (!movId) return;
+  showMsg('mov-issue-msg', 'Re-requesting...', 'info');
+  api('reRequestRejectedItems', { movementId: movId }).then(function(r) {
+    if (r.success) {
+      showMsg('mov-issue-msg', '✓ ' + r.count + ' item(s) re-requested.', 'ok');
+      loadMovDetails();
+    } else {
+      showMsg('mov-issue-msg', r.error || 'No items to re-request', 'warn');
+    }
+  });
+}
+
+function renderSerialInputs() {
+  var el = $('mov-serial-inputs');
+  el.innerHTML = '';
+  pendingSerialItems.forEach(function(item, idx) {
+    var div = document.createElement('div');
+    div.style.marginBottom = '12px';
+    div.innerHTML =
+      '<label style="color:#0F6E56;font-weight:bold">' + item.componentName +
+      ' (need ' + item.qtyApproved + ' serial(s))</label>' +
+      '<select id="mov_ser_' + idx + '" multiple style="height:' + (item.qtyApproved * 40) + 'px">' +
+      '<option value="">Loading serials...</option></select>';
+    el.appendChild(div);
+    api('getAvailableSerialsByComponent', { componentName: item.componentName }).then(function(serials) {
+      var sel = $('mov_ser_' + idx);
+      sel.innerHTML = '';
+      (serials || []).forEach(function(s) {
+        var o = document.createElement('option');
+        o.value = s.serial; o.textContent = s.serial;
+        sel.appendChild(o);
+      });
+    });
+  });
+}
+
+function issueSerials() {
+  var movId = $('mov-sel').value;
+  var calls = pendingSerialItems.length;
+  var done = 0;
+  var errors = [];
+  showMsg('mov-serial-msg', 'Issuing serial items...', 'info');
+  pendingSerialItems.forEach(function(item, idx) {
+    var sel = $('mov_ser_' + idx);
+    var selected = Array.from(sel.selectedOptions).map(function(o) { return o.value; });
+    if (selected.length !== item.qtyApproved) {
+      errors.push(item.componentName + ': select exactly ' + item.qtyApproved + ' serial(s)');
+      done++;
+      if (done === calls) finish();
+      return;
+    }
+    api('issueSerialMovement', {
+      movementId: movId,
+      rowIndex: item.rowIndex,
+      serialNumbers: selected.join(','),
+      productionId: item.productionId,
+      componentId: item.componentId,
+      qtyApproved: item.qtyApproved
+    }).then(function(r) {
+      done++;
+      if (!r.success) errors.push(r.error);
+      if (done === calls) finish();
+    }).catch(function(e) {
+      done++; errors.push(e.message);
+      if (done === calls) finish();
+    });
+  });
+
+  function finish() {
+    if (errors.length === 0) {
+      showMsg('mov-serial-msg', '✓ All serial items issued successfully!', 'ok');
+      $('mov-serial-section').style.display = 'none';
+      playBeep('complete');
+      loadMovDetails();
+    } else {
+      showMsg('mov-serial-msg', '✗ Errors: ' + errors.join(', '), 'err');
+    }
+  }
+}
+
+// ==================== PWA INSTALL ====================
+var deferredPrompt;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  $('installBar').classList.add('show');
+});
+
+function installApp() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function() {
+      deferredPrompt = null;
+      $('installBar').classList.remove('show');
+    });
+  }
+}
+
+// ==================== INIT ====================
+window.onload = function() {
+  // Set today's date for date fields
+  var today = new Date().toISOString().split('T')[0];
+  var dateFields = document.querySelectorAll('input[type="date"]');
+  dateFields.forEach(function(f) { if (!f.value) f.value = today; });
+};
+</script>
+</body>
+</html>
