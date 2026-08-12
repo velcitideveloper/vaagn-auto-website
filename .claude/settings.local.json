@@ -16,7 +16,11 @@
       "Read(//d//**)",
       "Read(//c/Users/velci/**)",
       "Bash(find ~ -maxdepth 5 -iname \"*.clasp.json\" -o -maxdepth 5 -iname \"*.clasprc.json\" 2>/dev/null)",
-      "Bash(npx clasp *)"
+      "Bash(npx clasp *)",
+      "Bash(git status *)",
+      "Bash(git check-ignore *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
