@@ -37,6 +37,63 @@ nav, nav.show{opacity:1 !important;transform:translateY(0) !important;transition
 /* HERO */
 
 .hero{margin-top:0;min-height:calc(100vh - 60px);display:grid;grid-template-columns:1fr 1fr;background:linear-gradient(135deg,#d4d8df 0%,#bfc5ce 35%,#9aa3ae 65%,#626e7c 100%);overflow:hidden;position:relative;}
+
+/* COMING SOON HERO BADGE — anchored to .hero-r (the vehicle image wrapper), not the whole hero
+   section, so it attaches to the top-left corner of the image itself. Positioned with
+   position:absolute inside .hero-r (which already has position:relative + overflow:hidden).
+   Navbar is fixed at top:12px, height:60px (ends ~72px) with a 16px shadow blur beyond that,
+   so the badge starts at 96px to clear the navbar and its shadow with room to spare.
+   z-index stays at 2, well below the navbar's z-index:1000, so the navbar always stays on top. */
+.cs-hero-badge {
+  position: absolute;
+  top: 96px;
+  left: 0;
+  width: 160px;
+  height: 160px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cs-hero-badge::before {
+  content: "COMING SOON";
+  position: absolute;
+  top: 38px;
+  left: -35px;
+  width: 160px;
+  padding: 8px 0;
+  background: linear-gradient(180deg, #e52222 0%, #b30000 100%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-align: center;
+  transform: rotate(-45deg);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.cs-hero-badge::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-style: solid;
+  border-width: 10px;
+  border-color: #7a0000 transparent transparent #7a0000;
+}
+
+@media(max-width:860px) {
+  .cs-hero-badge { width: 130px; height: 130px; }
+  .cs-hero-badge::before { top: 30px; left: -32px; width: 140px; font-size: 9px; }
+}
+
+@media(max-width:480px) {
+  .cs-hero-badge { width: 110px; height: 110px; }
+  .cs-hero-badge::before { top: 24px; left: -30px; width: 130px; font-size: 8px; }
+}
+
 .hero-l{padding:64px 52px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;}
 .hero-pill{display:none;align-items:center;gap:6px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.1);border-radius:100px;padding:4px 12px;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#3a4a5a;margin-bottom:20px;width:fit-content;}
 .hero-pill span{width:5px;height:5px;border-radius:50%;background:#22c55e;}
