@@ -321,10 +321,17 @@ setColour('red', 'Racing Red');
 <!-- LAUNCH ANIMATION — remove this block after launch period -->
 <script>
 (function(){
+  function getStorage(key) {
+    try { return localStorage.getItem(key); } catch(e) { return null; }
+  }
+  function setStorage(key, val) {
+    try { localStorage.setItem(key, val); } catch(e) {}
+  }
+
   const key = 'vaagn_launch_seen_iv-cart';
-  if(localStorage.getItem(key)) return;
+  if(getStorage(key)) return;
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  localStorage.setItem(key, '1');
+  setStorage(key, '1');
 
   const style = document.createElement('style');
   style.textContent = `

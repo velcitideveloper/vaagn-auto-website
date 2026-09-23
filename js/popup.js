@@ -1,5 +1,12 @@
+function getStorage(key) {
+  try { return localStorage.getItem(key); } catch(e) { return null; }
+}
+function setStorage(key, val) {
+  try { localStorage.setItem(key, val); } catch(e) {}
+}
+
 // POPUP AUTO OPEN — only if not already submitted
-if (!localStorage.getItem('vaagn_popup_submitted')) {
+if (!getStorage('vaagn_popup_submitted')) {
   setTimeout(() => {
     const overlay = document.getElementById('popup-overlay');
     if (overlay) openPopup('General');
@@ -29,7 +36,15 @@ async function submitPopup() {
   const phone = document.getElementById('p-phone').value.trim();
   const city = document.getElementById('p-city').value.trim();
   const vehicle = document.getElementById('p-vehicle').value;
-  if(!name || phone.length < 10) { alert('Please enter name and 10-digit phone.'); return; }
+  if(!name || phone.length < 10) {
+    const err = document.getElementById('p-error');
+    if(err) { err.textContent = 'Please enter your name and a 10-digit phone number.'; err.style.display = 'block'; }
+    return;
+  }
+
+  // Honeypot check — bots fill hidden fields
+  const honeypot = document.getElementById('p-honeypot');
+  if(honeypot && honeypot.value) return;
 
   popupSubmitting = true;
   const btn = document.querySelector('.p-submit');
@@ -46,7 +61,9 @@ async function submitPopup() {
   } catch(e) {}
   
   btn.textContent = '✓ Sent!';
-  localStorage.setItem('vaagn_popup_submitted', '1');
+  const err = document.getElementById('p-error');
+  if(err) err.style.display = 'none';
+  setStorage('vaagn_popup_submitted', '1');
   setTimeout(() => {
     closePopup();
     btn.textContent = 'Request Callback →';
