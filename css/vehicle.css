@@ -25,76 +25,41 @@ nav, nav.show{opacity:1 !important;transform:translateY(0) !important;transition
 .nav-site:hover{color:var(--dark);border-color:#aaa;}
 .nav-cta{font-family:var(--F);font-size:.8rem;font-weight:600;background:var(--navy);color:#fff;padding:8px 18px;border-radius:6px;transition:all .2s;}
 .nav-cta:hover{background:var(--blue);}
-.hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;padding:4px;}
-.hamburger span{display:block;width:20px;height:2px;background:var(--dark);border-radius:2px;transition:.3s;}
-.mob-menu{display:none;position:fixed;inset:0;background:#fff;z-index:99998;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
-.mob-menu.open{display:flex;}
-.mob-menu a{font-family:var(--F);font-size:1.6rem;font-weight:600;color:var(--dark);}
 .mob-close{position:absolute;top:16px;right:18px;font-size:1.4rem;background:none;border:none;cursor:pointer;color:var(--muted);}
 .mob-cta{background:var(--navy) !important;color:#fff !important;padding:12px 36px;border-radius:8px;font-size:1rem !important;}
 .mob-site{font-size:.85rem !important;font-weight:500 !important;color:var(--blue) !important;border:1px solid var(--blue-l) !important;padding:8px 20px;border-radius:6px;}
 
 /* HERO */
 
-.hero{margin-top:0;min-height:calc(100vh - 60px);display:grid;grid-template-columns:1fr 1fr;background:linear-gradient(135deg,#d4d8df 0%,#bfc5ce 35%,#9aa3ae 65%,#626e7c 100%);overflow:hidden;position:relative;}
-
-/* COMING SOON HERO BADGE — anchored to .hero-r (the vehicle image wrapper), not the whole hero
-   section, so it attaches to the top-left corner of the image itself. Positioned with
-   position:absolute inside .hero-r (which already has position:relative + overflow:hidden).
-   Navbar is fixed at top:12px, height:60px (ends ~72px) with a 16px shadow blur beyond that,
-   so the badge starts at 96px to clear the navbar and its shadow with room to spare.
-   z-index stays at 2, well below the navbar's z-index:1000, so the navbar always stays on top. */
-.cs-hero-badge {
-  position: absolute;
-  top: 96px;
-  left: 0;
-  width: 160px;
-  height: 160px;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.cs-hero-badge::before {
-  content: "COMING SOON";
-  position: absolute;
-  top: 38px;
-  left: -35px;
-  width: 160px;
-  padding: 8px 0;
-  background: linear-gradient(180deg, #e52222 0%, #b30000 100%);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  text-align: center;
-  transform: rotate(-45deg);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-.cs-hero-badge::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  border-style: solid;
-  border-width: 10px;
-  border-color: #7a0000 transparent transparent #7a0000;
-}
-
-@media(max-width:860px) {
-  .cs-hero-badge { width: 130px; height: 130px; }
-  .cs-hero-badge::before { top: 30px; left: -32px; width: 140px; font-size: 9px; }
-}
-
-@media(max-width:480px) {
-  .cs-hero-badge { width: 110px; height: 110px; }
-  .cs-hero-badge::before { top: 24px; left: -30px; width: 130px; font-size: 8px; }
-}
+.hero{margin-top:0;min-height:calc(100vh - 60px);display:grid;grid-template-columns:1fr 1fr;background:linear-gradient(135deg,#d4d8df 0%,#bfc5ce 35%,#9aa3ae 65%,#626e7c 100%);overflow:hidden;position:relative;padding-top:72px;}
 
 .hero-l{padding:64px 52px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2;}
+
+/* COMING SOON BAR — sits inside .hero-l, below the fixed navbar, so it's never obscured */
+.cs-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(229,34,34,0.12);
+  border: 1px solid rgba(229,34,34,0.4);
+  color: #e52222;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  font-family: 'Space Grotesk', sans-serif;
+  width: fit-content;
+}
+.cs-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e52222;
+  flex-shrink: 0;
+}
 .hero-pill{display:none;align-items:center;gap:6px;background:rgba(255,255,255,.7);border:1px solid rgba(0,0,0,.1);border-radius:100px;padding:4px 12px;font-size:.65rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#3a4a5a;margin-bottom:20px;width:fit-content;}
 .hero-pill span{width:5px;height:5px;border-radius:50%;background:#22c55e;}
 h1{font-family:var(--FD);font-size:clamp(2.8rem,4.5vw,4.4rem);font-weight:400;line-height:1.08;color:#0d1117;margin-bottom:18px;letter-spacing:-.01em;}
@@ -345,11 +310,13 @@ footer{background:#0f0f0f;padding:44px 48px 24px;border-top:1px solid rgba(255,2
 @media(max-width:860px){
   /* Nav */
   #nav{padding:0 16px !important;}
-  .nav-links,.nav-right{display:none !important;}
-  .hamburger{display:flex !important;}
+  .nav-links{display:none !important;}
+  .nav-right{display:flex !important;align-items:center;gap:8px;}
+  .nav-right .btn-nav{display:none !important;}
+  .nav-right .nav-hamburger{display:flex !important;}
 
   /* Hero */
-.hero{grid-template-columns:1fr !important;margin-top:0px !important;min-height:auto !important;}  .hero-l{padding:32px 20px 28px;order:2;}
+.hero{grid-template-columns:1fr !important;margin-top:0px !important;min-height:auto !important;padding-top:64px !important;}  .hero-l{padding:32px 20px 28px;order:2;}
   .hero-r{height:280px !important;min-height:unset !important;}  /* fix: was min-height:100% which collapses when parent is auto */
   h1{font-size:2.2rem;}
   .disc{top:10px;right:10px;padding:10px 12px;min-width:105px;}
@@ -407,10 +374,12 @@ footer{background:#0f0f0f;padding:44px 48px 24px;border-top:1px solid rgba(255,2
 /* ── MOBILE (≤480px) ── */
 @media(max-width:480px){
   /* Hero */
+  .hero{padding-top:60px !important;}
   h1{font-size:1.85rem;}
   .hero-l{padding:24px 16px 20px;}
   .hero-r{height:230px !important;}
   .disc{display:none;}
+  .cs-bar { font-size: 9px; padding: 4px 10px; letter-spacing: 1px; }
   .price-badge{padding:10px 16px;margin-bottom:20px;}
   .hk-val{font-size:1.4rem;}
   .hk-label{font-size:.55rem;}
