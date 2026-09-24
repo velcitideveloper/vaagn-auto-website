@@ -77,8 +77,7 @@ const COMPONENTS = {
       <li><a href="/become-a-dealer.html">Dealership</a></li>
       <li><a href="/contact.html">Contact</a></li>
       <li><a href="https://academy.vaagnauto.com" target="_blank" rel="noopener"> Vaagn Ev Academy</a></li>
-       <li><a href="/dealer-portal.html">Dealer's Portal</a></li>
-    </ul>
+      <li><a href="/contact.html">Dealer's Portal</a></li>    </ul>
     <div class="nav-right">
       <a href="javascript:void(0)" class="btn-nav" onclick="openPopup('General')">Get a Quote</a>
       <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
