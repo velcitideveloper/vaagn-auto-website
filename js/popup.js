@@ -10,7 +10,7 @@ if (!getStorage('vaagn_popup_submitted')) {
   setTimeout(() => {
     const overlay = document.getElementById('popup-overlay');
     if (overlay) openPopup('General');
-  }, 30000);
+  }, 15000);
 }
 function openPopup(v) {
   document.getElementById('p-vehicle').value = v;
