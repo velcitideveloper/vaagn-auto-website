@@ -1,7 +1,7 @@
 function getStorage(key) {
   try { return localStorage.getItem(key); } catch(e) { return null; }
 }
-function setStorage(key, val) {
+function setStorage(key, val) {    
   try { localStorage.setItem(key, val); } catch(e) {}
 }
 
